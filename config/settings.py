@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "drf_spectacular",
     # Apps
+    "core.apps.CoreConfig",
     "users.apps.UsersConfig",
     "projects.apps.ProjectsConfig",
 ]
