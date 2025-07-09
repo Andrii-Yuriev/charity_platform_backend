@@ -71,13 +71,13 @@ class Project(models.Model):
         null=True,
         blank=True,
         help_text="Вкажіть, якщо тип збору '100% з продажу'",
-        verbose_name="Ціна товару",
+        verbose_name="Ціна товару, грн",
     )
     donation_percentage = models.PositiveSmallIntegerField(
         null=True,
         blank=True,
         help_text="Вкажіть, якщо тип збору '% від продажів'",
-        verbose_name="Відсоток на донат",
+        verbose_name="Відсоток на донат, %",
     )
 
     monobank_jar_url = models.URLField(
