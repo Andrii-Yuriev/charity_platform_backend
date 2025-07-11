@@ -1,6 +1,10 @@
+# users/serializers.py
+
 from rest_framework import serializers
-from .models import CustomUser
+from django.contrib.auth import get_user_model
 from projects.serializers import CategorySerializer
+
+User = get_user_model()
 
 
 class AuthorListSerializer(serializers.ModelSerializer):
@@ -8,7 +12,7 @@ class AuthorListSerializer(serializers.ModelSerializer):
     project_count = serializers.IntegerField(read_only=True)
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "id",
             "display_name",
@@ -23,7 +27,7 @@ class AuthorDetailSerializer(serializers.ModelSerializer):
     specialization = CategorySerializer(many=True, read_only=True)
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "id",
             "username",
@@ -44,7 +48,7 @@ class CurrentUserSerializer(serializers.ModelSerializer):
     specialization = CategorySerializer(many=True, read_only=True)
 
     class Meta:
-        model = CustomUser
+        model = User
         fields = [
             "id",
             "username",
@@ -60,4 +64,35 @@ class CurrentUserSerializer(serializers.ModelSerializer):
             "instagram_url",
             "facebook_url",
         ]
-        read_only_fields = ["id", "username", "email"]
+        read_only_fields = ["id", "email", "username"]
+
+
+class CustomRegisterSerializer(serializers.ModelSerializer):
+    password2 = serializers.CharField(
+        style={"input_type": "password"}, write_only=True
+    )
+
+    class Meta:
+        model = User
+        fields = ("email", "password", "password2")
+        extra_kwargs = {
+            "password": {
+                "write_only": True,
+                "style": {"input_type": "password"},
+            }
+        }
+
+    def validate(self, attrs):
+        if attrs.get("password") != attrs.pop("password2", None):
+            raise serializers.ValidationError(
+                {"password": "Паролі не співпадають."}
+            )
+        return attrs
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data["email"],
+            email=validated_data["email"],
+            password=validated_data["password"],
+        )
+        return user

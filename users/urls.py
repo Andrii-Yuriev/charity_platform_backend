@@ -6,8 +6,6 @@ router = DefaultRouter()
 router.register(r"authors", AuthorViewSet, basename="author")
 
 urlpatterns = [
-    # path("users/me/", CurrentUserView.as_view(), name="current-user"),
+    # path("me/", CurrentUserView.as_view(), name="current-user"),
     path("", include(router.urls)),
 ]
-
-urlpatterns += router.urls
