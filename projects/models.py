@@ -98,7 +98,7 @@ class Project(models.Model):
     status = models.CharField(
         max_length=10,
         choices=Status.choices,
-        default=Status.MODERATION,
+        default=Status.ACTIVE,
         verbose_name="Статус",
     )
     created_at = models.DateTimeField(
