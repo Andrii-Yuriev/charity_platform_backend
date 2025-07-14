@@ -203,3 +203,19 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+
+# DRF-Spectacular
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Charity Platform API",
+    "DESCRIPTION": "Документація для API благодійної платформи. Тут ви знайдете всі ендпоінти для взаємодії з бекендом.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    # dj-rest-auth
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+    },
+    "PREPROCESSING_HOOKS": ["core.spectacular_hooks.pre_processing_hook"],
+    "POSTPROCESSING_HOOKS": [
+        "drf_spectacular.hooks.postprocess_schema_enums",
+    ],
+}

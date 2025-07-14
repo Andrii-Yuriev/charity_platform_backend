@@ -13,8 +13,19 @@ from dj_rest_auth.utils import jwt_encode
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
+from drf_spectacular.utils import extend_schema_view, extend_schema
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="Отримати список авторів",
+        description="Повертає список авторів, у яких є хоча б один активний проєкт.",
+        tags=["Authors"],
+    ),
+    retrieve=extend_schema(
+        summary="Отримати публічний профіль автора", tags=["Authors"]
+    ),
+)
 class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for view public author profile.
@@ -42,6 +53,11 @@ class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
         return super().get_serializer_class()
 
 
+@extend_schema(
+    summary="Отримати або оновити свій профіль",
+    description="Дозволяє залогіненому користувачу переглянути та відредагувати свій профіль.",
+    tags=["Profile (Me)"],
+)
 class CurrentUserView(generics.RetrieveAPIView):
     """
     View for retrieving the current user's profile.
@@ -55,6 +71,11 @@ class CurrentUserView(generics.RetrieveAPIView):
         return self.request.user
 
 
+@extend_schema(
+    summary="Вхід через Google",
+    description="Приймає `access_token` від Google, створює/логінить користувача і повертає JWT токени.",
+    tags=["Authentication"],
+)
 class GoogleLogin(SocialLoginView):
     """
     View for Google OAuth2 login.
@@ -67,6 +88,11 @@ class GoogleLogin(SocialLoginView):
     client_class = OAuth2Client
 
 
+@extend_schema(
+    summary="Реєстрація нового користувача",
+    description="Створює нового користувача за email та паролем. Повертає JWT токени.",
+    tags=["Authentication"],
+)
 class CustomRegisterView(generics.CreateAPIView):
     serializer_class = CustomRegisterSerializer
     permission_classes = [permissions.AllowAny]

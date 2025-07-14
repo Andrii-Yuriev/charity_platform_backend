@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Category, Project, ProjectImage
 from users.models import CustomUser
+from drf_spectacular.utils import extend_schema_field
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -40,6 +41,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "end_date",
         ]
 
+    @extend_schema_field(serializers.URLField())
     def get_cover_image(self, obj):
         first_image = obj.images.first()
         if first_image:
