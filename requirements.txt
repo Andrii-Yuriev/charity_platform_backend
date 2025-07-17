@@ -11,7 +11,9 @@ cryptography==45.0.5
 dj-rest-auth==7.0.1
 Django==5.2.3
 django-allauth==65.10.0
+django-appconf==1.1.0
 django-cors-headers==4.7.0
+django-imagekit==5.0.0
 django-storages==1.14.6
 djangorestframework==3.16.0
 djangorestframework_simplejwt==5.5.0
@@ -25,6 +27,7 @@ mccabe==0.7.0
 mypy_extensions==1.1.0
 packaging==25.0
 pathspec==0.12.1
+pilkit==3.0
 pillow==11.3.0
 platformdirs==4.3.8
 psycopg2-binary==2.9.10

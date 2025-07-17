@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from core.validators import validate_image_size, validate_image_extension
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill, Transpose
 
 
 class Category(models.Model):
@@ -130,11 +132,20 @@ class ProjectImage(models.Model):
         related_name="images",
         verbose_name="Проєкт",
     )
-    image = models.ImageField(
+    image = ProcessedImageField(
         upload_to="project_gallery/",
-        validators=[validate_image_size, validate_image_extension],
+        processors=[
+            Transpose(),
+            ResizeToFill(1200, 1200),
+        ],
+        format="WEBP",
+        options={"quality": 85},
+        null=True,
+        blank=True,
         verbose_name="Зображення",
+        validators=[validate_image_size, validate_image_extension],
     )
+
     order = models.PositiveIntegerField(default=0, verbose_name="Порядок")
 
     def __str__(self):

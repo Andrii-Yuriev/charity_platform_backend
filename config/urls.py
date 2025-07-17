@@ -7,7 +7,13 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
-from users.views import GoogleLogin, CustomRegisterView, CurrentUserView
+from users.views import (
+    GoogleLogin,
+    CustomRegisterView,
+    CurrentUserView,
+    CurrentUserUpdateView,
+    AvatarUpdateView,
+)
 
 urlpatterns = [
     # Admin URL
@@ -18,6 +24,21 @@ urlpatterns = [
     # Authentication URLs
     path(
         "api/v1/auth/user/", CurrentUserView.as_view(), name="rest_user_details"
+    ),
+    path(
+        "api/v1/auth/user/",
+        CurrentUserView.as_view(),
+        name="rest_user_details_read",
+    ),
+    path(
+        "api/v1/auth/user/update/",
+        CurrentUserUpdateView.as_view(),
+        name="rest_user_details_update",
+    ),
+    path(
+        "api/v1/auth/user/avatar/",
+        AvatarUpdateView.as_view(),
+        name="rest_user_avatar_update",
     ),
     path("api/v1/auth/", include("dj_rest_auth.urls")),
     path(

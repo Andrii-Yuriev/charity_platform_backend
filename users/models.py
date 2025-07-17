@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from core.validators import validate_image_size, validate_image_extension
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill, Transpose
 
 
 class CustomUserManager(BaseUserManager):
@@ -60,12 +62,18 @@ class CustomUser(AbstractUser):
     )
 
     bio = models.TextField(blank=True, verbose_name="Про себе")
-    avatar = models.ImageField(
+    avatar = ProcessedImageField(
         upload_to="avatars/",
+        processors=[Transpose(), ResizeToFill(400, 400)],
+        format="WEBP",
+        options={"quality": 85},
         null=True,
         blank=True,
         verbose_name="Аватар",
-        validators=[validate_image_size, validate_image_extension],
+        validators=[
+            validate_image_size,
+            validate_image_extension,
+        ],
     )
     city = models.CharField(max_length=100, blank=True, verbose_name="Місто")
     specialization = models.ManyToManyField(
