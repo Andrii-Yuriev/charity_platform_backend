@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions, generics, status
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser
 from django.db.models import Count, Q
 from .models import CustomUser
 from projects.models import Project
@@ -8,6 +9,7 @@ from .serializers import (
     AuthorDetailSerializer,
     CurrentUserSerializer,
     CustomRegisterSerializer,
+    AvatarUpdateSerializer,
 )
 from dj_rest_auth.utils import jwt_encode
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -54,9 +56,9 @@ class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 @extend_schema(
-    summary="Отримати або оновити свій профіль",
-    description="Дозволяє залогіненому користувачу переглянути та відредагувати свій профіль.",
-    tags=["Profile (Me)"],
+    summary="Отримати свій профіль",
+    description="Повертає дані поточного аутентифікованого користувача.",
+    tags=["Profile"],
 )
 class CurrentUserView(generics.RetrieveAPIView):
     """
@@ -72,8 +74,26 @@ class CurrentUserView(generics.RetrieveAPIView):
 
 
 @extend_schema(
+    summary="Оновити текстові дані свого профілю",
+    description="Дозволяє оновити текстові поля профілю. Надсилайте дані у форматі application/json.",
+    tags=["Profile"],
+)
+class CurrentUserUpdateView(generics.UpdateAPIView):
+    queryset = CustomUser.objects.all()
+    serializer_class = CurrentUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+
+@extend_schema(
     summary="Вхід через Google",
-    description="Приймає `access_token` від Google, створює/логінить користувача і повертає JWT токени.",
+    description="""
+Приймає `access_token`, отриманий від Google на стороні клієнта. 
+Надсилайте запит у форматі application/json: `{\"access_token\": \"...\"}`.
+У відповідь повертає JWT токени вашого додатку.
+    """,
     tags=["Authentication"],
 )
 class GoogleLogin(SocialLoginView):
@@ -112,3 +132,21 @@ class CustomRegisterView(generics.CreateAPIView):
 
         headers = self.get_success_headers(serializer.data)
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+@extend_schema(
+    summary="Оновити свій аватар",
+    description="""
+Оновлює аватар поточного користувача. 
+Надсилайте запит у форматі **multipart/form-data** з файлом у полі `avatar`.
+    """,
+    tags=["Profile"],
+)
+class AvatarUpdateView(generics.UpdateAPIView):
+    queryset = CustomUser.objects.all()
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser]
+    serializer_class = AvatarUpdateSerializer
+
+    def get_object(self):
+        return self.request.user

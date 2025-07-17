@@ -34,6 +34,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt.token_blacklist",
+    "storages",
+    "imagekit",
     "dj_rest_auth",
     "dj_rest_auth.registration",
     "corsheaders",
@@ -219,3 +221,23 @@ SPECTACULAR_SETTINGS = {
         "drf_spectacular.hooks.postprocess_schema_enums",
     ],
 }
+
+if DEBUG:
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+else:
+    AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
+    AWS_S3_ENDPOINT_URL = (
+        f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"
+    )
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("R2_PUBLIC_DOMAIN")
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+    AWS_LOCATION = "media"
+
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
+    }
+
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
