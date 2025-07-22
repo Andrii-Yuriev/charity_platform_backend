@@ -44,13 +44,11 @@ class ProjectListSerializer(serializers.ModelSerializer):
     @extend_schema_field(serializers.URLField())
     def get_cover_image(self, obj):
         first_image = obj.images.first()
-        if first_image:
+
+        if first_image and first_image.image:
             request = self.context.get("request")
-            return (
-                request.build_absolute_uri(first_image.image.url)
-                if request
-                else first_image.image.url
-            )
+            return request.build_absolute_uri(first_image.image.url)
+
         return None
 
 
@@ -83,3 +81,29 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
             "end_date",
             "views_count",
         ]
+
+
+class ProjectForAuthorPageSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(read_only=True)
+    cover_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Project
+        fields = [
+            "id",
+            "title",
+            "subtitle",
+            "category",
+            "cover_image",
+            "donation_type",
+            "status",
+            "end_date",
+        ]
+
+    @extend_schema_field(serializers.URLField())
+    def get_cover_image(self, obj):
+        first_image = obj.images.first()
+        if first_image and first_image.image:
+            request = self.context.get("request")
+            return request.build_absolute_uri(first_image.image.url)
+        return None

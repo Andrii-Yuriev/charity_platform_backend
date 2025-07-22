@@ -1,9 +1,9 @@
 from rest_framework import viewsets, permissions, generics, status
 from rest_framework.response import Response
 from rest_framework.parsers import MultiPartParser
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Prefetch
 from .models import CustomUser
-from projects.models import Project
+from projects.models import Project, ProjectImage
 from .serializers import (
     AuthorListSerializer,
     AuthorDetailSerializer,
@@ -42,10 +42,29 @@ class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
             project_count=Count(
                 "projects", filter=Q(projects__status=Project.Status.ACTIVE)
             )
-        ).prefetch_related("specialization")
+        )
 
-        if self.action == "list":
-            return queryset.filter(project_count__gt=0)
+        if self.action == "retrieve":
+            queryset = queryset.prefetch_related(
+                "specialization",
+                Prefetch(
+                    "projects",
+                    queryset=Project.objects.filter(
+                        status=Project.Status.ACTIVE
+                    ).prefetch_related(
+                        Prefetch(
+                            "images",
+                            queryset=ProjectImage.objects.order_by("order"),
+                            to_attr="prefetched_images",
+                        )
+                    ),
+                    to_attr="prefetched_projects",
+                ),
+            )
+        else:
+            queryset = queryset.filter(project_count__gt=0).prefetch_related(
+                "specialization"
+            )
 
         return queryset
 
