@@ -13,23 +13,25 @@ class AuthorListSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id",
-            "display_name",
+            "full_name",
             "avatar",
             "city",
             "specialization",
             "project_count",
+            "date_joined",
         ]
 
 
 class AuthorDetailSerializer(serializers.ModelSerializer):
     specialization = CategorySerializer(many=True, read_only=True)
+    project_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = User
         fields = [
             "id",
             "username",
-            "display_name",
+            "full_name",
             "avatar",
             "bio",
             "city",
@@ -39,6 +41,7 @@ class AuthorDetailSerializer(serializers.ModelSerializer):
             "instagram_url",
             "facebook_url",
             "date_joined",
+            "project_count",
         ]
 
 

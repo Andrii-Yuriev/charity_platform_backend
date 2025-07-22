@@ -13,7 +13,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ["id", "username", "avatar", "display_name"]
+        fields = ["id", "username", "avatar", "full_name"]
 
 
 class ProjectImageSerializer(serializers.ModelSerializer):

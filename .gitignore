@@ -9,6 +9,7 @@ __pycache__/
 db.sqlite3
 
 /static/
+/staticfiles/
 /media/
 
 .idea/
@@ -18,7 +19,7 @@ db.sqlite3
 
 *.log
 
-
+.DS_Store
 .pytest_cache/
 .coverage
 schema.json

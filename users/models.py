@@ -101,7 +101,7 @@ class CustomUser(AbstractUser):
     objects = CustomUserManager()
 
     @property
-    def display_name(self):
+    def full_name(self):
         if self.first_name or self.last_name:
             return f"{self.first_name} {self.last_name}"
         return self.get_username()
