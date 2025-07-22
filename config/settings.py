@@ -23,6 +23,7 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 # Application definition
 
 INSTALLED_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -139,6 +140,10 @@ SITE_ID = 1
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "static"),
+]
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
@@ -241,3 +246,50 @@ else:
     }
 
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
+
+
+JAZZMIN_SETTINGS = {
+    "site_title": "Кабінет",
+    "site_header": "Підтримай",
+    "site_brand": "Благодійна платформа",
+    "site_logo": "img/logo.png",
+    "welcome_sign": "Вітаємо!",
+    "copyright": "Підтримай © 2024",
+    "hide_apps": [
+        "auth",
+        "authtoken",
+        "account",
+        "socialaccount",
+        "sites",
+        "token_blacklist",
+    ],
+    "hide_models": [],
+    "order_with_respect_to": ["users", "projects"],
+    "topmenu_links": [],
+    "icons": {
+        "users.CustomUser": "fas fa-user-circle",
+        "projects.Project": "fas fa-hands-helping",
+        "projects.Category": "fas fa-tags",
+    },
+    "app_names": {
+        "projects": "Управління проєктами",
+        "users": "Мій кабінет",
+    },
+    "show_ui_builder": False,
+    "custom_css": "css/custom_admin.css",
+    "custom_js": "js/custom_admin.js",
+}
+JAZZMIN_UI_TWEAKS = {
+    "theme": "default",
+    "dark_mode_theme": None,
+    "sidebar": "sidebar-light-primary",
+    "button_classes": {
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
+    },
+    "accent": "accent-primary",
+}
