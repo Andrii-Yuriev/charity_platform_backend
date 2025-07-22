@@ -1,6 +1,9 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from projects.serializers import CategorySerializer
+from projects.serializers import (
+    CategorySerializer,
+    ProjectForAuthorPageSerializer,
+)
 
 User = get_user_model()
 
@@ -19,12 +22,17 @@ class AuthorListSerializer(serializers.ModelSerializer):
             "specialization",
             "project_count",
             "date_joined",
+            "date_joined",
+            "telegram_url",
+            "instagram_url",
+            "facebook_url",
         ]
 
 
 class AuthorDetailSerializer(serializers.ModelSerializer):
     specialization = CategorySerializer(many=True, read_only=True)
     project_count = serializers.IntegerField(read_only=True)
+    projects = ProjectForAuthorPageSerializer(many=True, read_only=True)
 
     class Meta:
         model = User
@@ -42,6 +50,7 @@ class AuthorDetailSerializer(serializers.ModelSerializer):
             "facebook_url",
             "date_joined",
             "project_count",
+            "projects",
         ]
 
 
