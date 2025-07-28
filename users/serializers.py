@@ -104,6 +104,7 @@ class CustomRegisterSerializer(serializers.ModelSerializer):
             username=validated_data["email"],
             email=validated_data["email"],
             password=validated_data["password"],
+            is_staff=True,
         )
         return user
 

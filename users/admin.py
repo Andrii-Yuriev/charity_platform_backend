@@ -15,51 +15,79 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ("is_staff", "is_superuser", "is_active", "groups")
     search_fields = ("email", "username", "first_name", "last_name")
 
-    fieldsets = (
-        (None, {"fields": ("email", "password")}),
-        (
-            "Personal info",
-            {"fields": ("first_name", "last_name", "bio", "avatar", "city")},
-        ),
-        ("Professional info", {"fields": ("specialization",)}),
-        (
-            "Contacts",
-            {
-                "fields": (
-                    "phone_number",
-                    "telegram_url",
-                    "instagram_url",
-                    "facebook_url",
-                )
-            },
-        ),
-        (
-            "Permissions",
-            {
-                "fields": (
-                    "is_active",
-                    "is_staff",
-                    "is_superuser",
-                    "groups",
-                    "user_permissions",
-                )
-            },
-        ),
-        ("Important dates", {"fields": ("last_login", "date_joined")}),
-    )
-
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": (
-                    "email",
-                    "username",
-                    "first_name",
-                    "last_name",
-                    "password",
+    def get_fieldsets(self, request, obj=None):
+        # Якщо це супер-адмін, показуємо йому ВСЕ
+        if request.user.is_superuser:
+            return (
+                (None, {"fields": ("email", "password")}),
+                (
+                    "Персональна інформація",
+                    {
+                        "fields": (
+                            "first_name",
+                            "last_name",
+                            "bio",
+                            "city",
+                            "avatar",
+                        )
+                    },
                 ),
-            },
-        ),
-    )
+                (
+                    "Контакти",
+                    {
+                        "fields": (
+                            "phone_number",
+                            "telegram_url",
+                            "instagram_url",
+                            "facebook_url",
+                        )
+                    },
+                ),
+                ("Спеціалізація", {"fields": ("specialization",)}),
+                (
+                    "Права доступу",
+                    {
+                        "fields": (
+                            "is_active",
+                            "is_staff",
+                            "is_superuser",
+                            "groups",
+                            "user_permissions",
+                        )
+                    },
+                ),
+                ("Важливі дати", {"fields": ("last_login", "date_joined")}),
+            )
+        else:
+            return (
+                (
+                    "Персональна інформація",
+                    {
+                        "fields": (
+                            "first_name",
+                            "last_name",
+                            "bio",
+                            "city",
+                            "avatar",
+                        )
+                    },
+                ),
+                (
+                    "Контакти",
+                    {
+                        "fields": (
+                            "phone_number",
+                            "telegram_url",
+                            "instagram_url",
+                            "facebook_url",
+                        )
+                    },
+                ),
+                ("Спеціалізація", {"fields": ("specialization",)}),
+            )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(pk=request.user.pk)
