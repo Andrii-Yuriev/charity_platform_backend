@@ -278,6 +278,7 @@ JAZZMIN_SETTINGS = {
     "show_ui_builder": False,
     "custom_css": "css/custom_admin.css",
     "custom_js": "js/custom_admin.js",
+    "show_password_reset_link": True,
 }
 JAZZMIN_UI_TWEAKS = {
     "theme": "default",
