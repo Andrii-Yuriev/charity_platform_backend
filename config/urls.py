@@ -7,56 +7,85 @@ from drf_spectacular.views import (
     SpectacularRedocView,
     SpectacularSwaggerView,
 )
+
 from users.views import (
-    GoogleLogin,
     CustomRegisterView,
+    CustomPasswordResetView,
     CurrentUserView,
     CurrentUserUpdateView,
     AvatarUpdateView,
+    GoogleLogin,
 )
 
+
+from dj_rest_auth.views import (
+    LoginView,
+    LogoutView,
+    PasswordResetConfirmView,
+    PasswordChangeView,
+)
+from rest_framework_simplejwt.views import TokenRefreshView
+
 urlpatterns = [
-    # Admin URL
+    # 1. Адмін-панель
     path("admin/", admin.site.urls),
-    # Apps
+    # 2. API наших додатків
     path("api/v1/projects/", include("projects.urls")),
     path("api/v1/users/", include("users.urls")),
-    # Authentication URLs
+    # 3. АУТЕНТИФІКАЦІЯ
+    # Реєстрація
+    path(
+        "api/v1/auth/registration/",
+        CustomRegisterView.as_view(),
+        name="rest_register",
+    ),
+    # Скидання паролю
+    path(
+        "api/v1/auth/password/reset/",
+        CustomPasswordResetView.as_view(),
+        name="rest_password_reset",
+    ),
+    # Профіль користувача
     path(
         "api/v1/auth/user/", CurrentUserView.as_view(), name="rest_user_details"
     ),
     path(
-        "api/v1/auth/user/",
-        CurrentUserView.as_view(),
-        name="rest_user_details_read",
-    ),
-    path(
         "api/v1/auth/user/update/",
         CurrentUserUpdateView.as_view(),
-        name="rest_user_details_update",
+        name="rest_user_update",
     ),
     path(
         "api/v1/auth/user/avatar/",
         AvatarUpdateView.as_view(),
         name="rest_user_avatar_update",
     ),
-    path("api/v1/auth/", include("dj_rest_auth.urls")),
-    path(
-        "api/v1/auth/registration/",
-        CustomRegisterView.as_view(),
-        name="custom_register",
-    ),
-    # Google Login URL
+    # Соціальна аутентифікація
     path("api/v1/auth/google/", GoogleLogin.as_view(), name="google_login"),
-    # API
+    # Стандартні ендпоінти від dj-rest-auth
+    path("api/v1/auth/login/", LoginView.as_view(), name="rest_login"),
+    path("api/v1/auth/logout/", LogoutView.as_view(), name="rest_logout"),
+    path(
+        "api/v1/auth/token/refresh/",
+        TokenRefreshView.as_view(),
+        name="token_refresh",
+    ),
+    path(
+        "api/v1/auth/password/reset/confirm/",
+        PasswordResetConfirmView.as_view(),
+        name="password_reset_confirm",
+    ),
+    path(
+        "api/v1/auth/password/change/",
+        PasswordChangeView.as_view(),
+        name="password_change",
+    ),
+    # 4. Документація API
     path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
-    # Swagger UI:
     path(
         "api/v1/docs/",
         SpectacularSwaggerView.as_view(url_name="schema"),
         name="swagger-ui",
     ),
-    # ReDoc:
     path(
         "api/v1/redoc/",
         SpectacularRedocView.as_view(url_name="schema"),
@@ -64,6 +93,6 @@ urlpatterns = [
     ),
 ]
 
-
+# Налаштування для медіа файлів
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

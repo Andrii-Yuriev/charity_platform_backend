@@ -1,27 +1,19 @@
+# config/settings.py
+
 from pathlib import Path
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 load_dotenv()
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("SECRET_KEY")
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
+DEBUG = os.getenv("DEBUG", "True") == "True"
 ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 
-# Application definition
-
+# --- Application definition ---
 INSTALLED_APPS = [
     "jazzmin",
     "django.contrib.admin",
@@ -45,7 +37,7 @@ INSTALLED_APPS = [
     "allauth.account",
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
-    # Apps
+    # My apps
     "core.apps.CoreConfig",
     "users.apps.UsersConfig",
     "projects.apps.ProjectsConfig",
@@ -68,7 +60,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "core/templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -82,10 +74,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "config.wsgi.application"
 
-
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# --- Database ---
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
@@ -93,77 +82,58 @@ DATABASES = {
     }
 }
 
-
-# Password validation
-# https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
-
+# --- Auth ---
+AUTH_USER_MODEL = "users.CustomUser"
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-        "OPTIONS": {
-            "min_length": 8,
-        },
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
-
 AUTHENTICATION_BACKENDS = (
     "allauth.account.auth_backends.AuthenticationBackend",
     "django.contrib.auth.backends.ModelBackend",
 )
-
-AUTH_USER_MODEL = "users.CustomUser"
-
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
-LANGUAGE_CODE = "uk-ua"
-
-TIME_ZONE = "Europe/Kyiv"
-
-USE_I18N = True
-
-USE_TZ = True
-
 SITE_ID = 1
 
+# --- Internationalization ---
+LANGUAGE_CODE = "uk-ua"
+TIME_ZONE = "Europe/Kyiv"
+USE_I18N = True
+USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
+# --- Static & Media Files ---
 STATIC_URL = "static/"
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static"),
-]
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
-MEDIA_URL = "/media/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-# Default primary key field type
-# https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
+if DEBUG:
+    MEDIA_URL = "/media/"
+    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+else:
+    AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
+    AWS_S3_ENDPOINT_URL = f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"
+    AWS_S3_CUSTOM_DOMAIN = os.getenv("R2_PUBLIC_DOMAIN")
+    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
+    
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage", "OPTIONS": {"location": "media"}},
+        "staticfiles": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage", "OPTIONS": {"location": "static"}},
+    }
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
+    STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
 
+# --- CORS ---
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
-
+# --- REST Framework ---
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-    ),
-    "DEFAULT_PERMISSION_CLASSES": (
-        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
-    ),
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticatedOrReadOnly",),
 }
 
 SIMPLE_JWT = {
@@ -181,7 +151,12 @@ REST_AUTH = {
     "JWT_AUTH_HTTPONLY": False,
     "USER_DETAILS_SERIALIZER": "users.serializers.CurrentUserSerializer",
     "REGISTER_SERIALIZER": "users.serializers.CustomRegisterSerializer",
+    "PASSWORD_RESET_SERIALIZER": "users.serializers.FinalPasswordResetSerializer",
 }
+
+# --- Frontend URL ---
+CLIENT_URL = os.getenv("CLIENT_URL", "http://localhost:3000")
+PASSWORD_RESET_URL_TEMPLATE = f"{CLIENT_URL}/password-reset-confirm/{{uid}}/{{token}}/"
 
 # --- django-allauth ---
 ACCOUNT_AUTHENTICATION_METHOD = "email"
@@ -190,10 +165,6 @@ ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 ACCOUNT_EMAIL_VERIFICATION = "none"
-ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
-SOCIALACCOUNT_ADAPTER = (
-    "allauth.socialaccount.adapter.DefaultSocialAccountAdapter"
-)
 
 SOCIALACCOUNT_PROVIDERS = {
     "google": {
@@ -201,96 +172,56 @@ SOCIALACCOUNT_PROVIDERS = {
             "client_id": os.getenv("GOOGLE_CLIENT_ID"),
             "secret": os.getenv("GOOGLE_CLIENT_SECRET"),
         },
-        "SCOPE": [
-            "profile",
-            "email",
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "online",
-        },
+        "SCOPE": ["profile", "email"],
+        "AUTH_PARAMS": {"access_type": "online"},
     }
 }
 
-# DRF-Spectacular
+# --- DRF-Spectacular ---
 SPECTACULAR_SETTINGS = {
     "TITLE": "Charity Platform API",
-    "DESCRIPTION": "Документація для API благодійної платформи. Тут ви знайдете всі ендпоінти для взаємодії з бекендом.",
+    "DESCRIPTION": "Документація для API благодійної платформи.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
-    # dj-rest-auth
-    "SWAGGER_UI_SETTINGS": {
-        "deepLinking": True,
-    },
     "PREPROCESSING_HOOKS": ["core.spectacular_hooks.pre_processing_hook"],
-    "POSTPROCESSING_HOOKS": [
-        "drf_spectacular.hooks.postprocess_schema_enums",
-    ],
 }
 
-if DEBUG:
-    MEDIA_URL = "/media/"
-    MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-else:
-    AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
-    AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
-    AWS_STORAGE_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
-    AWS_S3_ENDPOINT_URL = (
-        f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"
-    )
-    AWS_S3_CUSTOM_DOMAIN = os.getenv("R2_PUBLIC_DOMAIN")
-    AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-    AWS_LOCATION = "media"
-
-    STORAGES = {
-        "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage"},
-    }
-
-    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
-
-
+# --- Jazzmin ---
 JAZZMIN_SETTINGS = {
-    "site_title": "Кабінет",
-    "site_header": "Підтримай",
-    "site_brand": "Благодійна платформа",
-    "site_logo": "img/logo.png",
-    "welcome_sign": "Вітаємо!",
-    "copyright": "Підтримай © 2024",
-    "hide_apps": [
-        "auth",
-        "authtoken",
-        "account",
-        "socialaccount",
-        "sites",
-        "token_blacklist",
-    ],
-    "hide_models": [],
-    "order_with_respect_to": ["users", "projects"],
-    "topmenu_links": [],
+    "site_title": "Кабінет", "site_header": "Підтримай", "site_brand": "Благодійна платформа",
+    "site_logo": "img/logo.png", "welcome_sign": "Вітаємо!", "copyright": "Підтримай © 2024",
+    "hide_apps": ["auth", "authtoken", "account", "socialaccount", "sites", "token_blacklist"],
+    "order_with_respect_to": ["users", "projects"], "topmenu_links": [],
     "icons": {
-        "users.CustomUser": "fas fa-user-circle",
-        "projects.Project": "fas fa-hands-helping",
+        "users.CustomUser": "fas fa-user-circle", "projects.Project": "fas fa-hands-helping",
         "projects.Category": "fas fa-tags",
     },
-    "app_names": {
-        "projects": "Управління проєктами",
-        "users": "Мій кабінет",
-    },
-    "show_ui_builder": False,
-    "custom_css": "css/custom_admin.css",
-    "custom_js": "js/custom_admin.js",
-    "show_password_reset_link": True,
+    "custom_css": "css/custom_admin.css", "custom_js": "js/custom_admin.js",
 }
 JAZZMIN_UI_TWEAKS = {
-    "theme": "default",
-    "dark_mode_theme": None,
-    "sidebar": "sidebar-light-primary",
+    "theme": "default", "dark_mode_theme": None, "sidebar": "sidebar-light-primary",
     "button_classes": {
-        "primary": "btn-primary",
-        "secondary": "btn-secondary",
-        "info": "btn-info",
-        "warning": "btn-warning",
-        "danger": "btn-danger",
-        "success": "btn-success",
+        "primary": "btn-primary", "secondary": "btn-secondary", "info": "btn-info",
+        "warning": "btn-warning", "danger": "btn-danger", "success": "btn-success",
     },
     "accent": "accent-primary",
+}
+
+# --- Email ---
+if not DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST = "smtp.gmail.com"
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+    DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+else:
+    EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# --- Logging ---
+LOGGING = {
+    "version": 1, "disable_existing_loggers": False,
+    "handlers": {"console": {"class": "logging.StreamHandler"}},
+    "root": {"handlers": ["console"], "level": "INFO"},
 }

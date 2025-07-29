@@ -10,6 +10,7 @@ from .serializers import (
     CurrentUserSerializer,
     CustomRegisterSerializer,
     AvatarUpdateSerializer,
+    FinalPasswordResetSerializer,
 )
 from dj_rest_auth.utils import jwt_encode
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
@@ -169,3 +170,17 @@ class AvatarUpdateView(generics.UpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class CustomPasswordResetView(generics.GenericAPIView):
+    serializer_class = FinalPasswordResetSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"detail": "Лист для скидання паролю надіслано."},
+            status=status.HTTP_200_OK,
+        )
