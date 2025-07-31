@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from datetime import timedelta
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv()
@@ -76,19 +77,26 @@ WSGI_APPLICATION = "config.wsgi.application"
 
 # --- Database ---
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,
+    )
 }
 
 # --- Auth ---
 AUTH_USER_MODEL = "users.CustomUser"
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator", "OPTIONS": {"min_length": 8}},
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"
+    },
 ]
 AUTHENTICATION_BACKENDS = (
     "allauth.account.auth_backends.AuthenticationBackend",
@@ -114,13 +122,21 @@ else:
     AWS_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
-    AWS_S3_ENDPOINT_URL = f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"
+    AWS_S3_ENDPOINT_URL = (
+        f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com"
+    )
     AWS_S3_CUSTOM_DOMAIN = os.getenv("R2_PUBLIC_DOMAIN")
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
-    
+
     STORAGES = {
-        "default": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage", "OPTIONS": {"location": "media"}},
-        "staticfiles": {"BACKEND": "storages.backends.s3boto3.S3Boto3Storage", "OPTIONS": {"location": "static"}},
+        "default": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {"location": "media"},
+        },
+        "staticfiles": {
+            "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+            "OPTIONS": {"location": "static"},
+        },
     }
     MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
     STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
@@ -132,8 +148,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # --- REST Framework ---
 REST_FRAMEWORK = {
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework_simplejwt.authentication.JWTAuthentication",),
-    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticatedOrReadOnly",),
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticatedOrReadOnly",
+    ),
 }
 
 SIMPLE_JWT = {
@@ -156,7 +176,9 @@ REST_AUTH = {
 
 # --- Frontend URL ---
 CLIENT_URL = os.getenv("CLIENT_URL", "http://localhost:3000")
-PASSWORD_RESET_URL_TEMPLATE = f"{CLIENT_URL}/password-reset-confirm/{{uid}}/{{token}}/"
+PASSWORD_RESET_URL_TEMPLATE = (
+    f"{CLIENT_URL}/password-reset-confirm/{{uid}}/{{token}}/"
+)
 
 # --- django-allauth ---
 ACCOUNT_AUTHENTICATION_METHOD = "email"
@@ -188,21 +210,41 @@ SPECTACULAR_SETTINGS = {
 
 # --- Jazzmin ---
 JAZZMIN_SETTINGS = {
-    "site_title": "Кабінет", "site_header": "Підтримай", "site_brand": "Благодійна платформа",
-    "site_logo": "img/logo.png", "welcome_sign": "Вітаємо!", "copyright": "Підтримай © 2024",
-    "hide_apps": ["auth", "authtoken", "account", "socialaccount", "sites", "token_blacklist"],
-    "order_with_respect_to": ["users", "projects"], "topmenu_links": [],
+    "site_title": "Кабінет",
+    "site_header": "Підтримай",
+    "site_brand": "Благодійна платформа",
+    "site_logo": "img/logo.png",
+    "welcome_sign": "Вітаємо!",
+    "copyright": "Підтримай © 2024",
+    "hide_apps": [
+        "auth",
+        "authtoken",
+        "account",
+        "socialaccount",
+        "sites",
+        "token_blacklist",
+    ],
+    "order_with_respect_to": ["users", "projects"],
+    "topmenu_links": [],
     "icons": {
-        "users.CustomUser": "fas fa-user-circle", "projects.Project": "fas fa-hands-helping",
+        "users.CustomUser": "fas fa-user-circle",
+        "projects.Project": "fas fa-hands-helping",
         "projects.Category": "fas fa-tags",
     },
-    "custom_css": "css/custom_admin.css", "custom_js": "js/custom_admin.js",
+    "custom_css": "css/custom_admin.css",
+    "custom_js": "js/custom_admin.js",
 }
 JAZZMIN_UI_TWEAKS = {
-    "theme": "default", "dark_mode_theme": None, "sidebar": "sidebar-light-primary",
+    "theme": "default",
+    "dark_mode_theme": None,
+    "sidebar": "sidebar-light-primary",
     "button_classes": {
-        "primary": "btn-primary", "secondary": "btn-secondary", "info": "btn-info",
-        "warning": "btn-warning", "danger": "btn-danger", "success": "btn-success",
+        "primary": "btn-primary",
+        "secondary": "btn-secondary",
+        "info": "btn-info",
+        "warning": "btn-warning",
+        "danger": "btn-danger",
+        "success": "btn-success",
     },
     "accent": "accent-primary",
 }
@@ -221,7 +263,8 @@ else:
 
 # --- Logging ---
 LOGGING = {
-    "version": 1, "disable_existing_loggers": False,
+    "version": 1,
+    "disable_existing_loggers": False,
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": "INFO"},
 }
