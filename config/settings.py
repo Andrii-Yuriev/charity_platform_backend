@@ -11,7 +11,13 @@ load_dotenv()
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 DEBUG = os.getenv("DEBUG", "True") == "True"
-ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+RENDER_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
+if RENDER_HOSTNAME:
+    ALLOWED_HOSTS = [RENDER_HOSTNAME]
+else:
+    ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
+
+CSRF_TRUSTED_ORIGINS = [f"https://{RENDER_HOSTNAME}"] if RENDER_HOSTNAME else []
 
 
 # --- Application definition ---
