@@ -57,3 +57,4 @@ tomli==2.2.1
 typing_extensions==4.14.0
 uritemplate==4.2.0
 urllib3==2.5.0
+whitenoise==6.9.0
