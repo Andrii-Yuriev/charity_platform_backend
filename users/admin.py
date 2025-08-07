@@ -6,38 +6,28 @@ from .forms import CustomUserCreationForm, CustomUserChangeForm
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
+    add_form = CustomUserCreationForm
     form = CustomUserChangeForm
     list_display = ("email", "username", "first_name", "last_name", "is_staff")
-
-    def get_queryset(self, request):
-        qs = super().get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        return qs.filter(pk=request.user.pk)
-
-    def add_view(self, request, form_url="", extra_context=None):
-        if self.has_add_permission(request):
-            self.form = CustomUserCreationForm
-            self.fieldsets = (
-                (
-                    None,
-                    {
-                        "classes": ("wide",),
-                        "fields": ("email",),
-                    },
-                ),
-            )
-        return super().add_view(request, form_url, extra_context)
-
-    def change_view(self, request, object_id, form_url="", extra_context=None):
-        self.form = CustomUserChangeForm
-        self.fieldsets = self.get_fieldsets(request)
-        return super().change_view(request, object_id, form_url, extra_context)
+    list_filter = ("is_staff", "is_superuser", "is_active", "groups")
+    search_fields = ("email", "username", "first_name", "last_name")
+    ordering = ("email",)
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "password", "password2"),
+            },
+        ),
+    )
 
     def get_fieldsets(self, request, obj=None):
+        if not obj:
+            return self.add_fieldsets
         if request.user.is_superuser:
-            return (
-                (None, {"fields": ("email", "password")}),
+            edited_fieldsets = (
+                (None, {"fields": ("email",)}),
                 (
                     "Персональна інформація",
                     {
@@ -47,7 +37,7 @@ class CustomUserAdmin(UserAdmin):
                             "username",
                             "bio",
                             "city",
-                            "avatar",
+                            "avatar_original",
                         )
                     },
                 ),
@@ -76,6 +66,7 @@ class CustomUserAdmin(UserAdmin):
                 ),
                 ("Важливі дати", {"fields": ("last_login", "date_joined")}),
             )
+            return edited_fieldsets
         else:
             return (
                 (
@@ -86,7 +77,7 @@ class CustomUserAdmin(UserAdmin):
                             "last_name",
                             "bio",
                             "city",
-                            "avatar",
+                            "avatar_original",
                         )
                     },
                 ),
@@ -103,3 +94,9 @@ class CustomUserAdmin(UserAdmin):
                 ),
                 ("Спеціалізація", {"fields": ("specialization",)}),
             )
+
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(pk=request.user.pk)
