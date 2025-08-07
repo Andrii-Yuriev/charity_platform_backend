@@ -1,99 +1,104 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 
 
 @admin.register(CustomUser)
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(admin.ModelAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
 
-    list_display = ("email", "username", "first_name", "last_name", "is_staff")
+    list_display = ("email", "first_name", "last_name", "is_staff")
+    search_fields = ("email", "first_name", "last_name")
     ordering = ("email",)
-
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": ("email", "password", "password2"),
-            },
-        ),
-    )
+    list_filter = ("is_staff", "is_active")
 
     def get_fieldsets(self, request, obj=None):
-        if not obj:
-            return self.add_fieldsets
 
-        if request.user.is_superuser:
-            return (
-                (None, {"fields": ("email",)}),
-                (
-                    "Персональна інформація",
-                    {
-                        "fields": (
-                            "first_name",
-                            "last_name",
-                            "username",
-                            "bio",
-                            "city",
-                            "avatar_original",
-                        )
-                    },
-                ),
-                (
-                    "Контакти",
-                    {
-                        "fields": (
-                            "phone_number",
-                            "telegram_url",
-                            "instagram_url",
-                            "facebook_url",
-                        )
-                    },
-                ),
-                ("Спеціалізація", {"fields": ("specialization",)}),
-                (
-                    "Права доступу",
-                    {
-                        "fields": (
-                            "is_active",
-                            "is_staff",
-                            "is_superuser",
-                            "groups",
-                        )
-                    },
-                ),
-                ("Важливі дати", {"fields": ("last_login", "date_joined")}),
-            )
-        else:
-            return (
-                (
-                    "Персональна інформація",
-                    {
-                        "fields": (
-                            "first_name",
-                            "last_name",
-                            "bio",
-                            "city",
-                            "avatar_original",
-                        )
-                    },
-                ),
-                (
-                    "Контакти",
-                    {
-                        "fields": (
-                            "phone_number",
-                            "telegram_url",
-                            "instagram_url",
-                            "facebook_url",
-                        )
-                    },
-                ),
-                ("Спеціалізація", {"fields": ("specialization",)}),
-            )
+        if obj:
+            if request.user.is_superuser:
+                return (
+                    (
+                        "Основна інформація",
+                        {
+                            "fields": (
+                                "email",
+                                "first_name",
+                                "last_name",
+                                "username",
+                                "avatar_original",
+                            )
+                        },
+                    ),
+                    (
+                        "Додаткова інформація",
+                        {"fields": ("bio", "city", "specialization")},
+                    ),
+                    (
+                        "Контакти",
+                        {
+                            "fields": (
+                                "phone_number",
+                                "telegram_url",
+                                "instagram_url",
+                                "facebook_url",
+                            )
+                        },
+                    ),
+                    (
+                        "Права доступу",
+                        {
+                            "fields": (
+                                "is_active",
+                                "is_staff",
+                                "is_superuser",
+                                "groups",
+                            )
+                        },
+                    ),
+                    ("Важливі дати", {"fields": ("last_login", "date_joined")}),
+                )
+            else:
+                return (
+                    (
+                        "Персональна інформація",
+                        {
+                            "fields": (
+                                "first_name",
+                                "last_name",
+                                "bio",
+                                "city",
+                                "avatar_original",
+                            )
+                        },
+                    ),
+                    (
+                        "Контакти",
+                        {
+                            "fields": (
+                                "phone_number",
+                                "telegram_url",
+                                "instagram_url",
+                                "facebook_url",
+                            )
+                        },
+                    ),
+                    ("Спеціалізація", {"fields": ("specialization",)}),
+                )
+
+        return super().get_fieldsets(request, obj)
+
+    def get_form(self, request, obj=None, **kwargs):
+
+        if not obj:
+            return self.add_form
+        return super().get_form(request, obj, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+
+        if not change:
+            obj.set_password(form.cleaned_data["password"])
+        super().save_model(request, obj, form, change)
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
