@@ -95,9 +95,9 @@ class CustomUserAdmin(admin.ModelAdmin):
         return super().get_form(request, obj, **kwargs)
 
     def save_model(self, request, obj, form, change):
-
         if not change:
-            obj.set_password(form.cleaned_data["password"])
+            obj.set_password(form.cleaned_data["password1"])
+
         super().save_model(request, obj, form, change)
 
     def get_queryset(self, request):
