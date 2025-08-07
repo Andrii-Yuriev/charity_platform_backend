@@ -26,7 +26,7 @@ class CustomUserAdmin(admin.ModelAdmin):
                                 "first_name",
                                 "last_name",
                                 "username",
-                                "avatar_original",
+                                "avatar",
                             )
                         },
                     ),
@@ -68,7 +68,7 @@ class CustomUserAdmin(admin.ModelAdmin):
                                 "last_name",
                                 "bio",
                                 "city",
-                                "avatar_original",
+                                "avatar",
                             )
                         },
                     ),
@@ -97,6 +97,7 @@ class CustomUserAdmin(admin.ModelAdmin):
     def save_model(self, request, obj, form, change):
         if not change:
             obj.set_password(form.cleaned_data["password1"])
+            obj.is_staff = True
 
         super().save_model(request, obj, form, change)
 
