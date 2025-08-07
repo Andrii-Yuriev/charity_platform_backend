@@ -100,3 +100,13 @@ class CustomUserAdmin(UserAdmin):
         if request.user.is_superuser:
             return qs
         return qs.filter(pk=request.user.pk)
+
+    def add_view(self, request, form_url="", extra_context=None):
+        if request.method == "POST":
+            form = CustomUserCreationForm(request.POST, request.FILES)
+            if not form.is_valid():
+                print("--- ADMIN ADD FORM ERRORS ---")
+                print(form.errors.as_json())
+                print("-----------------------------")
+
+        return super().add_view(request, form_url, extra_context)
