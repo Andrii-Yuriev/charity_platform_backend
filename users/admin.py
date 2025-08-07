@@ -1,29 +1,64 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 
 
 @admin.register(CustomUser)
-class CustomUserAdmin(admin.ModelAdmin):
+class CustomUserAdmin(UserAdmin):
     add_form = CustomUserCreationForm
     form = CustomUserChangeForm
 
-    list_display = ("email", "first_name", "last_name", "is_staff")
-    search_fields = ("email", "first_name", "last_name")
+    list_display = ("email", "username", "first_name", "last_name", "is_staff")
     ordering = ("email",)
 
-    add_fieldsets = (
-        (
-            None,
-            {
-                "classes": ("wide",),
-                "fields": ("email",),
-            },
-        ),
-    )
-
     def get_fieldsets(self, request, obj=None):
+        if not obj:
+            return None
+
         if request.user.is_superuser:
+            return (
+                (None, {"fields": ("email",)}),
+                (
+                    "Персональна інформація",
+                    {
+                        "fields": (
+                            "first_name",
+                            "last_name",
+                            "username",
+                            "bio",
+                            "city",
+                            "avatar_original",
+                        )
+                    },
+                ),
+                (
+                    "Контакти",
+                    {
+                        "fields": (
+                            "phone_number",
+                            "telegram_url",
+                            "instagram_url",
+                            "facebook_url",
+                        )
+                    },
+                ),
+                ("Спеціалізація", {"fields": ("specialization",)}),
+                (
+                    "Права доступу",
+                    {
+                        "fields": (
+                            "is_active",
+                            "is_staff",
+                            "is_superuser",
+                            "groups",
+                        )
+                    },
+                ),
+                ("Важливі дати", {"fields": ("last_login", "date_joined")}),
+            )
+        else:
+
             return (
                 (
                     "Персональна інформація",
@@ -31,30 +66,28 @@ class CustomUserAdmin(admin.ModelAdmin):
                         "fields": (
                             "first_name",
                             "last_name",
-                            "email",
+                            "bio",
+                            "city",
                             "avatar_original",
                         )
                     },
                 ),
                 (
-                    "Права доступу",
-                    {"fields": ("is_active", "is_staff", "is_superuser")},
+                    "Контакти",
+                    {
+                        "fields": (
+                            "phone_number",
+                            "telegram_url",
+                            "instagram_url",
+                            "facebook_url",
+                        )
+                    },
                 ),
-                ("Важливі дати", {"fields": ("last_login", "date_joined")}),
-            )
-        else:
-            return (
-                (
-                    "Персональна інформація",
-                    {"fields": ("first_name", "last_name", "avatar_original")},
-                ),
+                ("Спеціалізація", {"fields": ("specialization",)}),
             )
 
-    def get_form(self, request, obj=None, **kwargs):
-        if not obj:
-            return self.add_form
-        return super().get_form(request, obj, **kwargs)
-
-    def add_view(self, request, form_url="", extra_context=None):
-        self.fieldsets = self.add_fieldsets
-        return super().add_view(request, form_url, extra_context)
+    def get_queryset(self, request):
+        qs = super().get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        return qs.filter(pk=request.user.pk)
