@@ -1,10 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import CustomUser
+from .forms import CustomUserCreationForm, CustomUserChangeForm
 
 
 @admin.register(CustomUser)
 class CustomUserAdmin(UserAdmin):
+    form = CustomUserChangeForm
+    add_form = CustomUserCreationForm
     list_display = (
         "email",
         "username",
@@ -91,12 +94,3 @@ class CustomUserAdmin(UserAdmin):
         if request.user.is_superuser:
             return qs
         return qs.filter(pk=request.user.pk)
-
-    def add_view(self, request, form_url="", extra_context=None):
-        if request.method == "POST":
-            form = self.get_form(request)(request.POST, request.FILES)
-            if not form.is_valid():
-                print("--- ADMIN VALIDATION ERRORS ---")
-                print(form.errors.as_json())
-                print("-----------------------------")
-        return super().add_view(request, form_url, extra_context)
