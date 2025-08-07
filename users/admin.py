@@ -12,9 +12,19 @@ class CustomUserAdmin(UserAdmin):
     list_display = ("email", "username", "first_name", "last_name", "is_staff")
     ordering = ("email",)
 
+    add_fieldsets = (
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "password", "password2"),
+            },
+        ),
+    )
+
     def get_fieldsets(self, request, obj=None):
         if not obj:
-            return None
+            return self.add_fieldsets
 
         if request.user.is_superuser:
             return (
@@ -58,7 +68,6 @@ class CustomUserAdmin(UserAdmin):
                 ("Важливі дати", {"fields": ("last_login", "date_joined")}),
             )
         else:
-
             return (
                 (
                     "Персональна інформація",
