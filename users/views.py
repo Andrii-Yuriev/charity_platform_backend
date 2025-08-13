@@ -1,6 +1,6 @@
 from rest_framework import viewsets, permissions, generics, status
 from rest_framework.response import Response
-from rest_framework.parsers import MultiPartParser
+from rest_framework.parsers import MultiPartParser, JSONParser
 from django.db.models import Count, Q, Prefetch
 from .models import CustomUser
 from projects.models import Project, ProjectImage
@@ -9,7 +9,6 @@ from .serializers import (
     AuthorDetailSerializer,
     CurrentUserSerializer,
     CustomRegisterSerializer,
-    AvatarUpdateSerializer,
     FinalPasswordResetSerializer,
 )
 from dj_rest_auth.utils import jwt_encode
@@ -17,6 +16,9 @@ from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
 from drf_spectacular.utils import extend_schema_view, extend_schema
+from django.conf import settings
+
+# --- 1. ПУБЛІЧНІ ПРОФІЛІ АВТОРІВ ---
 
 
 @extend_schema_view(
@@ -26,17 +28,15 @@ from drf_spectacular.utils import extend_schema_view, extend_schema
         tags=["Authors"],
     ),
     retrieve=extend_schema(
-        summary="Отримати публічний профіль автора", tags=["Authors"]
+        summary="Отримати публічний профіль автора",
+        description="Повертає повну публічну інформацію про автора, включаючи список його активних проєктів.",
+        tags=["Authors"],
     ),
 )
 class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet for view public author profile.
-    - list: show only authors with active projects.
-    - retrieve: show any author.
+    ViewSet для перегляду публічних профілів авторів.
     """
-
-    serializer_class = AuthorDetailSerializer
 
     def get_queryset(self):
         queryset = CustomUser.objects.annotate(
@@ -45,92 +45,63 @@ class AuthorViewSet(viewsets.ReadOnlyModelViewSet):
             )
         )
 
-        if self.action == "retrieve":
-            queryset = queryset.prefetch_related(
-                "specialization",
-                Prefetch(
-                    "projects",
-                    queryset=Project.objects.filter(
-                        status=Project.Status.ACTIVE
-                    ).prefetch_related(
-                        Prefetch(
-                            "images",
-                            queryset=ProjectImage.objects.order_by("order"),
-                            to_attr="prefetched_images",
-                        )
-                    ),
-                    to_attr="prefetched_projects",
+        queryset = queryset.prefetch_related(
+            "specialization",
+            Prefetch(
+                "projects",
+                queryset=Project.objects.filter(
+                    status=Project.Status.ACTIVE
+                ).prefetch_related(
+                    Prefetch(
+                        "images",
+                        queryset=ProjectImage.objects.order_by("order"),
+                    )
                 ),
-            )
-        else:
-            queryset = queryset.filter(project_count__gt=0).prefetch_related(
-                "specialization"
-            )
+            ),
+        )
+
+        if self.action == "list":
+            return queryset.filter(project_count__gt=0)
 
         return queryset
 
     def get_serializer_class(self):
         if self.action == "list":
             return AuthorListSerializer
-        return super().get_serializer_class()
+        return AuthorDetailSerializer
+
+
+# --- 2. ПРОФІЛЬ ПОТОЧНОГО КОРИСТУВАЧА ---
 
 
 @extend_schema(
-    summary="Отримати свій профіль",
-    description="Повертає дані поточного аутентифікованого користувача.",
-    tags=["Profile"],
-)
-class CurrentUserView(generics.RetrieveAPIView):
-    """
-    View for retrieving the current user's profile.
-    Allow on endpoint: /api/v1/users/me/
-    """
-
-    serializer_class = CurrentUserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user
-
-
-@extend_schema(
-    summary="Оновити текстові дані свого профілю",
-    description="Дозволяє оновити текстові поля профілю. Надсилайте дані у форматі application/json.",
-    tags=["Profile"],
-)
-class CurrentUserUpdateView(generics.UpdateAPIView):
-    queryset = CustomUser.objects.all()
-    serializer_class = CurrentUserSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_object(self):
-        return self.request.user
-
-
-@extend_schema(
-    summary="Вхід через Google",
+    summary="Отримати або оновити свій профіль",
     description="""
-Приймає `access_token`, отриманий від Google на стороні клієнта. 
-Надсилайте запит у форматі application/json: `{\"access_token\": \"...\"}`.
-У відповідь повертає JWT токени вашого додатку.
+GET: Повертає дані поточного користувача.
+PATCH/PUT: Оновлює дані. Для текстових полів використовуйте application/json. 
+Для завантаження аватара використовуйте multipart/form-data з полем 'avatar'.
+У відповідь завжди повертається повний оновлений об'єкт користувача.
     """,
-    tags=["Authentication"],
+    tags=["Profile (Me)"],
 )
-class GoogleLogin(SocialLoginView):
+class CurrentUserProfileView(generics.RetrieveUpdateAPIView):
     """
-    View for Google OAuth2 login.
-    Allow on endpoint: /api/v1/auth/google/
-    Uses acces from frontend to authenticate users via Google.
+    Єдиний ендпоінт для роботи з профілем поточного користувача.
     """
 
-    adapter_class = GoogleOAuth2Adapter
-    callback_url = "http://localhost:3000"
-    client_class = OAuth2Client
+    serializer_class = CurrentUserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [MultiPartParser, JSONParser]  # Приймає і JSON, і файли
+
+    def get_object(self):
+        return self.request.user
+
+
+# --- 3. АУТЕНТИФІКАЦІЯ ---
 
 
 @extend_schema(
     summary="Реєстрація нового користувача",
-    description="Створює нового користувача за email та паролем. Повертає JWT токени.",
     tags=["Authentication"],
 )
 class CustomRegisterView(generics.CreateAPIView):
@@ -141,37 +112,33 @@ class CustomRegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-
         access_token, refresh_token = jwt_encode(user)
-
+        user_data = CurrentUserSerializer(
+            user, context=self.get_serializer_context()
+        ).data
         data = {
-            "user": self.get_serializer(user).data,
+            "user": user_data,
             "access": str(access_token),
             "refresh": str(refresh_token),
         }
-
         headers = self.get_success_headers(serializer.data)
         return Response(data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 @extend_schema(
-    summary="Оновити свій аватар",
-    description="""
-Оновлює аватар поточного користувача. 
-Надсилайте запит у форматі **multipart/form-data** з файлом у полі `avatar`.
-    """,
-    tags=["Profile"],
+    summary="Вхід через Google",
+    tags=["Authentication"],
 )
-class AvatarUpdateView(generics.UpdateAPIView):
-    queryset = CustomUser.objects.all()
-    permission_classes = [permissions.IsAuthenticated]
-    parser_classes = [MultiPartParser]
-    serializer_class = AvatarUpdateSerializer
-
-    def get_object(self):
-        return self.request.user
+class GoogleLogin(SocialLoginView):
+    adapter_class = GoogleOAuth2Adapter
+    callback_url = settings.CLIENT_URL
+    client_class = OAuth2Client
 
 
+@extend_schema(
+    summary="Запит на скидання паролю",
+    tags=["Authentication"],
+)
 class CustomPasswordResetView(generics.GenericAPIView):
     serializer_class = FinalPasswordResetSerializer
     permission_classes = [permissions.AllowAny]
