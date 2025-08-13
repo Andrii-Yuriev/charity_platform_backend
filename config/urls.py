@@ -11,9 +11,7 @@ from drf_spectacular.views import (
 from users.views import (
     CustomRegisterView,
     CustomPasswordResetView,
-    CurrentUserView,
-    CurrentUserUpdateView,
-    AvatarUpdateView,
+    CurrentUserProfileView,
     GoogleLogin,
 )
 
@@ -46,19 +44,7 @@ urlpatterns = [
         name="rest_password_reset",
     ),
     # Профіль користувача
-    path(
-        "api/v1/auth/user/", CurrentUserView.as_view(), name="rest_user_details"
-    ),
-    path(
-        "api/v1/auth/user/update/",
-        CurrentUserUpdateView.as_view(),
-        name="rest_user_update",
-    ),
-    path(
-        "api/v1/auth/user/avatar/",
-        AvatarUpdateView.as_view(),
-        name="rest_user_avatar_update",
-    ),
+    path("api/v1/users/", CurrentUserProfileView.as_view(), name="my_profile"),
     # Соціальна аутентифікація
     path("api/v1/auth/google/", GoogleLogin.as_view(), name="google_login"),
     # Стандартні ендпоінти від dj-rest-auth
