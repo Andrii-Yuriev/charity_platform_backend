@@ -148,7 +148,9 @@ else:
     # STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
 
 # --- CORS ---
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
+CORS_ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:3000"
+).split(",")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # --- REST Framework ---
