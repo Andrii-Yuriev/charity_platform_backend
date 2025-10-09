@@ -48,6 +48,10 @@ class ProjectListSerializer(serializers.ModelSerializer):
             "cover_image",
             "status",
             "end_date",
+            "donation_type",
+            "price",
+            "donation_percentage",
+            "target_amount",
         ]
 
     @extend_schema_field(serializers.URLField())
@@ -107,6 +111,10 @@ class ProjectForAuthorPageSerializer(serializers.ModelSerializer):
             "donation_type",
             "status",
             "end_date",
+            "donation_type",
+            "price",
+            "donation_percentage",
+            "target_amount",
         ]
 
     @extend_schema_field(serializers.URLField())
